@@ -63,7 +63,7 @@ def test_activity_hierarchy_with_real_data():
     food_activity = next(activity for activity in activities if activity["name"] == "Еда")
     
     # Ищем организации по иерархии "Еда"
-    response = client.get(f"/api/v1/activities/{food_activity['id']}/organizations/hierarchy", headers={"X-API-Key": "your-secret-api-key-here"})
+    response = client.get(f"/api/v1/activities/{food_activity['id']}/organizations/hierarchy?level=3", headers={"X-API-Key": "your-secret-api-key-here"})
     assert response.status_code == 200
     
     data = response.json()

@@ -48,6 +48,7 @@ def test_create_and_get_building(client):
     """Тест создания и получения здания"""
     # Создаем здание
     building_data = {
+        "name": "Тестовое здание БД 1",
         "address": "г. Москва, ул. Ленина 1, офис 3",
         "latitude": 55.7558,
         "longitude": 37.6176
@@ -75,11 +76,13 @@ def test_get_buildings_list(client):
     # Создаем несколько зданий
     buildings_data = [
         {
+            "name": "Тестовое здание БД 2",
             "address": "г. Москва, ул. Ленина 1",
             "latitude": 55.7558,
             "longitude": 37.6176
         },
         {
+            "name": "Тестовое здание БД 3",
             "address": "г. Москва, ул. Пушкина 10",
             "latitude": 55.7558,
             "longitude": 37.6176

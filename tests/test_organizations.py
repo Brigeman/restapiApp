@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from app.models import Organization, Building, Activity, Phone
+from models import Organization, Building, Activity, Phone
 
 
 class TestOrganizationsAPI:
@@ -11,6 +11,7 @@ class TestOrganizationsAPI:
         """Тест получения организации по ID - успешный случай"""
         # Создаем тестовые данные
         building = Building(
+            name="Ленина",
             address="г. Москва, ул. Ленина 1, офис 3",
             latitude=55.7558,
             longitude=37.6176
@@ -31,7 +32,7 @@ class TestOrganizationsAPI:
         
         # Добавляем связи
         org.activities.append(activity)
-        phone = Phone(phone_number="2-222-222", organization_id=org.id)
+        phone = Phone(number="2-222-222", type="mobile", organization_id=org.id)
         db_session.add(phone)
         db_session.commit()
         
@@ -43,7 +44,7 @@ class TestOrganizationsAPI:
         assert data["name"] == "ООО 'Рога и Копыта'"
         assert data["building"]["address"] == "г. Москва, ул. Ленина 1, офис 3"
         assert len(data["phones"]) == 1
-        assert data["phones"][0]["phone_number"] == "2-222-222"
+        assert data["phones"][0]["number"] == "2-222-222"
         assert len(data["activities"]) == 1
         assert data["activities"][0]["name"] == "Молочная продукция"
     
@@ -56,6 +57,7 @@ class TestOrganizationsAPI:
         """Тест поиска организаций по названию"""
         # Создаем тестовые данные
         building = Building(
+            name="Пушкина",
             address="г. Москва, ул. Пушкина 10",
             latitude=55.7558,
             longitude=37.6176
@@ -81,11 +83,13 @@ class TestOrganizationsAPI:
         """Тест получения организаций по зданию"""
         # Создаем тестовые данные
         building1 = Building(
+            name="Ленина",
             address="г. Москва, ул. Ленина 1",
             latitude=55.7558,
             longitude=37.6176
         )
         building2 = Building(
+            name="Пушкина",
             address="г. Москва, ул. Пушкина 10",
             latitude=55.7558,
             longitude=37.6176
@@ -112,6 +116,7 @@ class TestOrganizationsAPI:
         """Тест получения организаций по деятельности"""
         # Создаем тестовые данные
         building = Building(
+            name="Ленина",
             address="г. Москва, ул. Ленина 1",
             latitude=55.7558,
             longitude=37.6176
@@ -147,6 +152,7 @@ class TestOrganizationsAPI:
         """Тест создания организации"""
         # Создаем тестовые данные
         building = Building(
+            name="Ленина",
             address="г. Москва, ул. Ленина 1",
             latitude=55.7558,
             longitude=37.6176
@@ -159,7 +165,10 @@ class TestOrganizationsAPI:
         org_data = {
             "name": "ООО 'Новая компания'",
             "building_id": building.id,
-            "phones": ["2-222-222", "3-333-333"],
+            "phones": [
+                {"number": "2-222-222", "type": "mobile"},
+                {"number": "3-333-333", "type": "work"}
+            ],
             "activity_ids": [activity.id]
         }
         

@@ -48,6 +48,7 @@ def test_create_organization_with_activities(client):
     """Тест создания организации с деятельностями"""
     # Создаем здание
     building_data = {
+        "name": "Тестовое здание 1",
         "address": "г. Москва, ул. Ленина 1",
         "latitude": 55.7558,
         "longitude": 37.6176
@@ -70,7 +71,7 @@ def test_create_organization_with_activities(client):
     org_data = {
         "name": "ООО 'Молоко'",
         "building_id": building_id,
-        "phones": ["2-222-222", "3-333-333"],
+        "phones": [{"number": "2-222-222", "type": "mobile"}, {"number": "3-333-333", "type": "mobile"}],
         "activity_ids": [activity_id]
     }
     response = client.post("/api/v1/organizations", json=org_data, headers={"X-API-Key": "your-secret-api-key-here"})
@@ -100,6 +101,7 @@ def test_geo_search_functionality(client):
     """Тест функциональности геопоиска"""
     # Создаем здание
     building_data = {
+        "name": "Тестовое здание 2",
         "address": "г. Москва, Красная площадь",
         "latitude": 55.7539,
         "longitude": 37.6208
@@ -111,8 +113,12 @@ def test_geo_search_functionality(client):
     # Создаем организацию
     org_data = {
         "name": "ООО 'Красная площадь'",
+        "description": "Организация на Красной площади",
+        "address": "г. Москва, Красная площадь",
+        "latitude": 55.7539,
+        "longitude": 37.6208,
         "building_id": building_id,
-        "phones": ["2-222-222"],
+        "phones": [{"number": "2-222-222", "type": "mobile"}],
         "activity_ids": []
     }
     response = client.post("/api/v1/organizations", json=org_data, headers={"X-API-Key": "your-secret-api-key-here"})
@@ -156,6 +162,7 @@ def test_activity_hierarchy_search(client):
     
     # Создаем здание и организацию
     building_data = {
+        "name": "Тестовое здание 3",
         "address": "г. Москва, ул. Ленина 1",
         "latitude": 55.7558,
         "longitude": 37.6176
@@ -166,14 +173,14 @@ def test_activity_hierarchy_search(client):
     org_data = {
         "name": "ООО 'Молоко'",
         "building_id": building_id,
-        "phones": ["2-222-222"],
+        "phones": [{"number": "2-222-222", "type": "mobile"}],
         "activity_ids": [child_id]
     }
     response = client.post("/api/v1/organizations", json=org_data, headers={"X-API-Key": "your-secret-api-key-here"})
     assert response.status_code == 201
     
     # Тестируем поиск по иерархии (должна найтись организация с дочерней деятельностью)
-    response = client.get(f"/api/v1/activities/{parent_id}/organizations/hierarchy", headers={"X-API-Key": "your-secret-api-key-here"})
+    response = client.get(f"/api/v1/activities/{parent_id}/organizations/hierarchy?level=3", headers={"X-API-Key": "your-secret-api-key-here"})
     assert response.status_code == 200
     
     data = response.json()

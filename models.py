@@ -18,6 +18,10 @@ class Organization(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False, index=True)
+    description = Column(Text, nullable=True)
+    address = Column(Text, nullable=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
     building_id = Column(Integer, ForeignKey("buildings.id"), nullable=False)
     
     # Связи
@@ -31,7 +35,8 @@ class Phone(Base):
     __tablename__ = "phones"
     
     id = Column(Integer, primary_key=True, index=True)
-    phone_number = Column(String(20), nullable=False)
+    number = Column(String(20), nullable=False)
+    type = Column(String(20), nullable=False, default="mobile")
     organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=False)
     
     # Связи
@@ -43,6 +48,7 @@ class Building(Base):
     __tablename__ = "buildings"
     
     id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
     address = Column(Text, nullable=False)
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
@@ -57,6 +63,7 @@ class Activity(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
     parent_id = Column(Integer, ForeignKey("activities.id"), nullable=True)
     level = Column(Integer, default=1)  # Уровень вложенности (1-3)
     

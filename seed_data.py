@@ -17,26 +17,31 @@ def create_test_data():
         # 1. Создаем здания
         buildings_data = [
             {
+                "name": "Торговый центр 'Красная площадь'",
                 "address": "г. Москва, Красная площадь, 1",
                 "latitude": 55.7539,
                 "longitude": 37.6208
             },
             {
+                "name": "Бизнес-центр 'Тверская'",
                 "address": "г. Москва, ул. Тверская, 1",
                 "latitude": 55.7575,
                 "longitude": 37.6136
             },
             {
+                "name": "Торговый центр 'Арбат'",
                 "address": "г. Москва, ул. Арбат, 1",
                 "latitude": 55.7494,
                 "longitude": 37.5931
             },
             {
+                "name": "Бизнес-центр 'Ленинский'",
                 "address": "г. Москва, ул. Ленина, 10",
                 "latitude": 55.7558,
                 "longitude": 37.6176
             },
             {
+                "name": "Торговый центр 'Пушкинский'",
                 "address": "г. Москва, ул. Пушкина, 15",
                 "latitude": 55.7558,
                 "longitude": 37.6176
@@ -149,6 +154,10 @@ def create_test_data():
             # Создаем организацию
             organization = Organization(
                 name=org_data["name"],
+                description=f"Описание {org_data['name']}",
+                address=f"Адрес {org_data['name']}",
+                latitude=55.7558,  # Координаты Москвы
+                longitude=37.6176,
                 building_id=org_data["building_id"]
             )
             db.add(organization)
@@ -157,7 +166,7 @@ def create_test_data():
             
             # Добавляем телефоны
             for phone_number in org_data["phones"]:
-                phone = Phone(phone_number=phone_number, organization_id=organization.id)
+                phone = Phone(number=phone_number, type="mobile", organization_id=organization.id)
                 db.add(phone)
             
             # Добавляем связи с деятельностями
@@ -184,13 +193,13 @@ def create_test_data():
         
         # Тест 1: Поиск организаций по "Еда" (должны найтись все организации с едой)
         food_orgs = db.query(Organization).join(Organization.activities).filter(
-            Activity.id.in_([food_activity.id] + get_child_activity_ids(db, food_activity.id))
+            Activity.id.in_([food_activity.id] + get_child_activity_ids(db, food_activity.id, 3))
         ).distinct().all()
         print(f"   Организации в категории 'Еда': {len(food_orgs)}")
         
         # Тест 2: Поиск организаций по "Автомобили" (должны найтись организации с автозапчастями)
         cars_orgs = db.query(Organization).join(Organization.activities).filter(
-            Activity.id.in_([cars_activity.id] + get_child_activity_ids(db, cars_activity.id))
+            Activity.id.in_([cars_activity.id] + get_child_activity_ids(db, cars_activity.id, 3))
         ).distinct().all()
         print(f"   Организации в категории 'Автомобили': {len(cars_orgs)}")
         

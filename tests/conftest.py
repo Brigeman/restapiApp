@@ -3,9 +3,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from app.database import Base, get_db
-from app.main import app
-from app.config import settings
+from database import Base, get_db
+from main import app
 
 
 # Создаем тестовую базу данных в памяти
@@ -52,7 +51,7 @@ def client(db_session):
 @pytest.fixture
 def api_key():
     """Фикстура для API ключа"""
-    return settings.API_KEY
+    return "your-secret-api-key-here"
 
 
 @pytest.fixture

@@ -50,15 +50,18 @@ def get_organizations_by_activity_hierarchy(db: Session, activity_id: int) -> Li
     return organizations
 
 
-def get_child_activity_ids(db: Session, parent_id: int) -> List[int]:
+def get_child_activity_ids(db: Session, parent_id: int, max_level: int = 3) -> List[int]:
     """
-    Рекурсивно получает ID всех дочерних деятельностей
+    Рекурсивно получает ID всех дочерних деятельностей до указанного уровня
     """
+    if max_level <= 0:
+        return []
+    
     children = db.query(Activity).filter(Activity.parent_id == parent_id).all()
     child_ids = [child.id for child in children]
     
     # Рекурсивно получаем дочерние элементы дочерних элементов
     for child_id in child_ids:
-        child_ids.extend(get_child_activity_ids(db, child_id))
+        child_ids.extend(get_child_activity_ids(db, child_id, max_level - 1))
     
     return child_ids 

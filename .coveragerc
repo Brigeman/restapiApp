@@ -11,6 +11,7 @@ omit =
     seed_data.py
     simple_test.py
     test_manual.py
+    main_backup.py
 
 [report]
 exclude_lines =

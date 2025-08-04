@@ -37,7 +37,7 @@ def test_search_organizations_by_rectangle():
 def test_search_organizations_by_activity_hierarchy():
     """Тест поиска организаций по иерархии деятельности"""
     client = TestClient(app)
-    response = client.get("/api/v1/activities/1/organizations/hierarchy", headers={"X-API-Key": "your-secret-api-key-here"})
+    response = client.get("/api/v1/activities/1/organizations/hierarchy?level=3", headers={"X-API-Key": "your-secret-api-key-here"})
     # Теперь возвращает 200 с пустым списком, так как деятельность не существует
     assert response.status_code == 200
     data = response.json()

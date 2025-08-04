@@ -40,6 +40,7 @@ def test_create_building():
     """Тест создания здания"""
     client = TestClient(app)
     building_data = {
+        "name": "Тестовое здание",
         "address": "г. Москва, ул. Ленина 1, офис 3",
         "latitude": 55.7558,
         "longitude": 37.6176

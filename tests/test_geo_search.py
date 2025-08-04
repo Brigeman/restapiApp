@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from app.models import Organization, Building, Activity
+from models import Organization, Building, Activity
 
 
 class TestGeoSearchAPI:
@@ -11,16 +11,19 @@ class TestGeoSearchAPI:
         """Тест поиска организаций в радиусе"""
         # Создаем тестовые данные с разными координатами
         building1 = Building(
+            name="Красная площадь",
             address="г. Москва, Красная площадь",
             latitude=55.7539,
             longitude=37.6208
         )
         building2 = Building(
+            name="Тверская",
             address="г. Москва, ул. Тверская 1",
             latitude=55.7575,
             longitude=37.6136
         )
         building3 = Building(
+            name="Арбат",
             address="г. Москва, ул. Арбат 1",
             latitude=55.7494,
             longitude=37.5931
@@ -28,9 +31,24 @@ class TestGeoSearchAPI:
         db_session.add_all([building1, building2, building3])
         db_session.commit()
         
-        org1 = Organization(name="ООО 'Красная площадь'", building_id=building1.id)
-        org2 = Organization(name="ИП 'Тверская'", building_id=building2.id)
-        org3 = Organization(name="ООО 'Арбат'", building_id=building3.id)
+        org1 = Organization(
+            name="ООО 'Красная площадь'", 
+            building_id=building1.id,
+            latitude=55.7539,
+            longitude=37.6208
+        )
+        org2 = Organization(
+            name="ИП 'Тверская'", 
+            building_id=building2.id,
+            latitude=55.7575,
+            longitude=37.6136
+        )
+        org3 = Organization(
+            name="ООО 'Арбат'", 
+            building_id=building3.id,
+            latitude=55.7494,
+            longitude=37.5931
+        )
         db_session.add_all([org1, org2, org3])
         db_session.commit()
         
@@ -55,16 +73,19 @@ class TestGeoSearchAPI:
         """Тест поиска организаций в прямоугольной области"""
         # Создаем тестовые данные
         building1 = Building(
+            name="Ленина",
             address="г. Москва, ул. Ленина 1",
             latitude=55.7558,
             longitude=37.6176
         )
         building2 = Building(
+            name="Пушкина",
             address="г. Москва, ул. Пушкина 10",
             latitude=55.7558,
             longitude=37.6176
         )
         building3 = Building(
+            name="Гагарина",
             address="г. Москва, ул. Гагарина 20",
             latitude=55.7500,
             longitude=37.6000
@@ -72,9 +93,24 @@ class TestGeoSearchAPI:
         db_session.add_all([building1, building2, building3])
         db_session.commit()
         
-        org1 = Organization(name="ООО 'Ленина'", building_id=building1.id)
-        org2 = Organization(name="ИП 'Пушкина'", building_id=building2.id)
-        org3 = Organization(name="ООО 'Гагарина'", building_id=building3.id)
+        org1 = Organization(
+            name="ООО 'Ленина'", 
+            building_id=building1.id,
+            latitude=55.7558,
+            longitude=37.6176
+        )
+        org2 = Organization(
+            name="ИП 'Пушкина'", 
+            building_id=building2.id,
+            latitude=55.7558,
+            longitude=37.6176
+        )
+        org3 = Organization(
+            name="ООО 'Гагарина'", 
+            building_id=building3.id,
+            latitude=55.7500,
+            longitude=37.6000
+        )
         db_session.add_all([org1, org2, org3])
         db_session.commit()
         
@@ -112,6 +148,7 @@ class TestGeoSearchAPI:
         
         # Создаем здания
         building = Building(
+            name="Ленина",
             address="г. Москва, ул. Ленина 1",
             latitude=55.7558,
             longitude=37.6176
@@ -120,9 +157,24 @@ class TestGeoSearchAPI:
         db_session.commit()
         
         # Создаем организации с разными деятельностями
-        org1 = Organization(name="ООО 'Мясо'", building_id=building.id)
-        org2 = Organization(name="ИП 'Молоко'", building_id=building.id)
-        org3 = Organization(name="ООО 'Другая компания'", building_id=building.id)
+        org1 = Organization(
+            name="ООО 'Мясо'", 
+            building_id=building.id,
+            latitude=55.7558,
+            longitude=37.6176
+        )
+        org2 = Organization(
+            name="ИП 'Молоко'", 
+            building_id=building.id,
+            latitude=55.7558,
+            longitude=37.6176
+        )
+        org3 = Organization(
+            name="ООО 'Другая компания'", 
+            building_id=building.id,
+            latitude=55.7558,
+            longitude=37.6176
+        )
         db_session.add_all([org1, org2, org3])
         db_session.commit()
         
@@ -132,7 +184,7 @@ class TestGeoSearchAPI:
         db_session.commit()
         
         # Тестируем поиск по родительской деятельности "Еда"
-        response = client.get(f"/api/v1/activities/{food_activity.id}/organizations/hierarchy", headers=headers)
+        response = client.get(f"/api/v1/activities/{food_activity.id}/organizations/hierarchy?level=3", headers=headers)
         assert response.status_code == 200
         
         data = response.json()
@@ -156,4 +208,4 @@ class TestGeoSearchAPI:
         }
         
         response = client.post("/api/v1/activities", json=activity_data, headers=headers)
-        assert response.status_code == 400  # Должна быть ошибка валидации 
+        assert response.status_code == 422  # Pydantic валидация возвращает 422 

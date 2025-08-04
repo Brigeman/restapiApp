@@ -202,4 +202,7 @@ logs/
 htmlcov/
 .pytest_cache/
 .tox/
-coverage.xml 
+coverage.xml
+
+# Backup files
+main_backup.py 
