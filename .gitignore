@@ -194,4 +194,12 @@ logs/
 
 # Temporary files
 *.tmp
-*.temp 
+*.temp
+
+# Coverage reports
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+coverage.xml 

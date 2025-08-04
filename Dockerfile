@@ -16,6 +16,9 @@ COPY requirements.txt .
 # Устанавливаем Python зависимости
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install coverage for CI/CD (optional)
+RUN pip install pytest-cov coverage
+
 # Копируем код приложения
 COPY . .
 
