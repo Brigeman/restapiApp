@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./organizations.db
+    volumes:
+      - ./organizations.db:/app/organizations.db
+    command: >
+      sh -c "python seed_data.py && uvicorn main:app --host 0.0.0.0 --port 8000"
+    restart: unless-stopped
+
+  # Опционально: PostgreSQL для продакшена
+  # postgres:
+  #   image: postgres:15
+  #   environment:
+  #     POSTGRES_DB: organizations_db
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: password
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+
+# volumes:
+#   postgres_data: 

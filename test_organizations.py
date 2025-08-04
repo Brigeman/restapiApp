@@ -20,8 +20,8 @@ def test_get_organization_with_invalid_api_key():
 def test_get_organization_with_valid_api_key():
     """Тест получения организации с правильным API ключом"""
     client = TestClient(app)
-    response = client.get("/api/v1/organizations/1", headers={"X-API-Key": "your-secret-api-key-here"})
-    # Пока что должно вернуть 404, так как организация не существует
+    response = client.get("/api/v1/organizations/999", headers={"X-API-Key": "your-secret-api-key-here"})
+    # Должно вернуть 404, так как организация с ID 999 не существует
     assert response.status_code == 404
 
 
