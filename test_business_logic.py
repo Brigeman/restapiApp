@@ -8,10 +8,10 @@ from main import app
 
 
 # Создаем тестовую базу данных в памяти
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+from config import settings
 
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
+    settings.TEST_DATABASE_URL,
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )

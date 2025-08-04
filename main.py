@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from routers import organizations, buildings, activities
+from config import settings
 
 app = FastAPI(
-    title="REST API Organizations Directory",
+    title=settings.APP_NAME,
     description="REST API для справочника организаций, зданий и деятельностей",
-    version="1.0.0"
+    version=settings.APP_VERSION
 )
 
 # Подключаем роутеры

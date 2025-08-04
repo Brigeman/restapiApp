@@ -1,8 +1,9 @@
 from fastapi import HTTPException, Header
 from typing import Optional
+from config import settings
 
-# API ключ (в реальном проекте должен быть в переменных окружения)
-API_KEY = "your-secret-api-key-here"
+# API ключ из настроек
+API_KEY = settings.API_KEY
 
 
 def verify_api_key(x_api_key: Optional[str] = Header(None)):
