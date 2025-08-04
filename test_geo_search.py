@@ -38,5 +38,9 @@ def test_search_organizations_by_activity_hierarchy():
     """Тест поиска организаций по иерархии деятельности"""
     client = TestClient(app)
     response = client.get("/api/v1/activities/1/organizations/hierarchy", headers={"X-API-Key": "your-secret-api-key-here"})
-    # Пока что должно вернуть 404, так как деятельность не существует
-    assert response.status_code == 404 
+    # Теперь возвращает 200 с пустым списком, так как деятельность не существует
+    assert response.status_code == 200
+    data = response.json()
+    assert "organizations" in data
+    assert "total" in data
+    assert data["total"] == 0 

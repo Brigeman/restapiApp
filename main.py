@@ -8,11 +8,15 @@ from schemas import (
     OrganizationCreate,
     Building as BuildingSchema,
     BuildingCreate,
+    Activity as ActivitySchema,
+    ActivityCreate,
     OrganizationsResponse,
     BuildingsResponse,
+    ActivitiesResponse,
     GeoSearchRequest,
     RectangleSearchRequest
 )
+from utils import calculate_distance, get_organizations_by_activity_hierarchy
 
 app = FastAPI(
     title="REST API Organizations Directory",
@@ -80,6 +84,45 @@ async def get_organization(
     return organization
 
 
+@app.post("/api/v1/organizations", response_model=OrganizationSchema, status_code=201)
+async def create_organization(
+    organization_data: OrganizationCreate,
+    db: Session = Depends(get_db),
+    api_key: str = Depends(verify_api_key)
+):
+    """Создать новую организацию"""
+    # Проверяем существование здания
+    building = db.query(Building).filter(Building.id == organization_data.building_id).first()
+    if not building:
+        raise HTTPException(status_code=404, detail="Building not found")
+    
+    # Проверяем существование деятельностей
+    activities = db.query(Activity).filter(Activity.id.in_(organization_data.activity_ids)).all()
+    if len(activities) != len(organization_data.activity_ids):
+        raise HTTPException(status_code=404, detail="Some activities not found")
+    
+    # Создаем организацию
+    organization = Organization(
+        name=organization_data.name,
+        building_id=organization_data.building_id
+    )
+    db.add(organization)
+    db.commit()
+    db.refresh(organization)
+    
+    # Добавляем телефоны
+    for phone_number in organization_data.phones:
+        phone = Phone(phone_number=phone_number, organization_id=organization.id)
+        db.add(phone)
+    
+    # Добавляем связи с деятельностями
+    organization.activities = activities
+    
+    db.commit()
+    db.refresh(organization)
+    return organization
+
+
 # Роутеры для зданий
 @app.get("/api/v1/buildings", response_model=BuildingsResponse)
 async def get_buildings(
@@ -142,36 +185,139 @@ async def create_building(
 
 
 # Роутеры для геопоиска
-@app.post("/api/v1/organizations/geo/radius")
+@app.post("/api/v1/organizations/geo/radius", response_model=OrganizationsResponse)
 async def search_organizations_by_radius(
-    search_data: dict,
+    search_data: GeoSearchRequest,
+    db: Session = Depends(get_db),
     api_key: str = Depends(verify_api_key)
 ):
     """Поиск организаций в радиусе от указанной точки"""
-    return {
-        "organizations": [],
-        "total": 0
-    }
+    organizations = []
+    
+    # Получаем все организации с их зданиями
+    orgs_with_buildings = db.query(Organization).join(Building).all()
+    
+    for org in orgs_with_buildings:
+        distance = calculate_distance(
+            search_data.latitude, search_data.longitude,
+            org.building.latitude, org.building.longitude
+        )
+        
+        if distance <= search_data.radius_km:
+            organizations.append(org)
+    
+    return OrganizationsResponse(
+        organizations=organizations,
+        total=len(organizations)
+    )
 
 
-@app.post("/api/v1/organizations/geo/rectangle")
+@app.post("/api/v1/organizations/geo/rectangle", response_model=OrganizationsResponse)
 async def search_organizations_by_rectangle(
-    search_data: dict,
+    search_data: RectangleSearchRequest,
+    db: Session = Depends(get_db),
     api_key: str = Depends(verify_api_key)
 ):
     """Поиск организаций в прямоугольной области"""
-    return {
-        "organizations": [],
-        "total": 0
-    }
+    organizations = db.query(Organization).join(Building).filter(
+        Building.latitude >= search_data.min_lat,
+        Building.latitude <= search_data.max_lat,
+        Building.longitude >= search_data.min_lon,
+        Building.longitude <= search_data.max_lon
+    ).all()
+    
+    return OrganizationsResponse(
+        organizations=organizations,
+        total=len(organizations)
+    )
 
 
 # Роутеры для деятельностей
-@app.get("/api/v1/activities/{activity_id}/organizations/hierarchy")
+@app.get("/api/v1/activities", response_model=ActivitiesResponse)
+async def get_activities(
+    db: Session = Depends(get_db),
+    api_key: str = Depends(verify_api_key)
+):
+    """Получить список всех деятельностей"""
+    activities = db.query(Activity).all()
+    return ActivitiesResponse(
+        activities=activities,
+        total=len(activities)
+    )
+
+
+@app.get("/api/v1/activities/{activity_id}", response_model=ActivitySchema)
+async def get_activity(
+    activity_id: int,
+    db: Session = Depends(get_db),
+    api_key: str = Depends(verify_api_key)
+):
+    """Получить информацию о деятельности по ID"""
+    activity = db.query(Activity).filter(Activity.id == activity_id).first()
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+    return activity
+
+
+@app.post("/api/v1/activities", response_model=ActivitySchema, status_code=201)
+async def create_activity(
+    activity_data: ActivityCreate,
+    db: Session = Depends(get_db),
+    api_key: str = Depends(verify_api_key)
+):
+    """Создать новую деятельность"""
+    # Проверяем уровень вложенности
+    if activity_data.level > 3:
+        raise HTTPException(status_code=400, detail="Activity level cannot exceed 3")
+    
+    # Проверяем родительскую деятельность
+    if activity_data.parent_id:
+        parent = db.query(Activity).filter(Activity.id == activity_data.parent_id).first()
+        if not parent:
+            raise HTTPException(status_code=404, detail="Parent activity not found")
+        if parent.level >= 3:
+            raise HTTPException(status_code=400, detail="Cannot create activity with level > 3")
+    
+    activity = Activity(**activity_data.model_dump())
+    db.add(activity)
+    db.commit()
+    db.refresh(activity)
+    return activity
+
+
+@app.get("/api/v1/activities/{activity_id}/organizations", response_model=OrganizationsResponse)
+async def get_organizations_by_activity(
+    activity_id: int,
+    db: Session = Depends(get_db),
+    api_key: str = Depends(verify_api_key)
+):
+    """Получить организации по конкретной деятельности"""
+    # Проверяем существование деятельности
+    activity = db.query(Activity).filter(Activity.id == activity_id).first()
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+    
+    organizations = db.query(Organization).join(
+        Organization.activities
+    ).filter(Activity.id == activity_id).all()
+    
+    return OrganizationsResponse(
+        organizations=organizations,
+        total=len(organizations)
+    )
+
+
+@app.get("/api/v1/activities/{activity_id}/organizations/hierarchy", response_model=OrganizationsResponse)
 async def get_organizations_by_activity_hierarchy(
     activity_id: int,
+    db: Session = Depends(get_db),
     api_key: str = Depends(verify_api_key)
 ):
     """Получить организации по иерархии деятельности"""
-    # Пока что возвращаем 404, так как база данных не настроена
-    raise HTTPException(status_code=404, detail="Activity not found") 
+    from utils import get_organizations_by_activity_hierarchy as get_orgs_by_hierarchy
+    organizations = get_orgs_by_hierarchy(db, activity_id)
+    
+    return OrganizationsResponse(
+        organizations=organizations,
+        total=len(organizations)
+    ) 
