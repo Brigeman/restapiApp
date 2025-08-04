@@ -23,16 +23,16 @@ def test_get_buildings_with_valid_api_key():
 def test_get_building_by_id():
     """Тест получения здания по ID"""
     client = TestClient(app)
-    response = client.get("/api/v1/buildings/1", headers={"X-API-Key": "your-secret-api-key-here"})
-    # Пока что должно вернуть 404, так как здание не существует
+    response = client.get("/api/v1/buildings/999", headers={"X-API-Key": "your-secret-api-key-here"})
+    # Должно вернуть 404, так как здание с ID 999 не существует
     assert response.status_code == 404
 
 
 def test_get_organizations_by_building():
     """Тест получения организаций в конкретном здании"""
     client = TestClient(app)
-    response = client.get("/api/v1/buildings/1/organizations", headers={"X-API-Key": "your-secret-api-key-here"})
-    # Пока что должно вернуть 404, так как здание не существует
+    response = client.get("/api/v1/buildings/999/organizations", headers={"X-API-Key": "your-secret-api-key-here"})
+    # Должно вернуть 404, так как здание с ID 999 не существует
     assert response.status_code == 404
 
 
@@ -45,5 +45,9 @@ def test_create_building():
         "longitude": 37.6176
     }
     response = client.post("/api/v1/buildings", json=building_data, headers={"X-API-Key": "your-secret-api-key-here"})
-    # Пока что должно вернуть 404, так как база данных не настроена
-    assert response.status_code == 404 
+    assert response.status_code == 201
+    
+    data = response.json()
+    assert data["address"] == "г. Москва, ул. Ленина 1, офис 3"
+    assert data["latitude"] == 55.7558
+    assert data["longitude"] == 37.6176 
