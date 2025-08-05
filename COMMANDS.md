@@ -63,7 +63,10 @@ alembic history
 ## 🐳 Docker команды
 
 ```bash
-# Сборка образа
+# Сборка образа (SQLite версия)
+docker build -f Dockerfile.sqlite -t organizations-api .
+
+# Сборка образа (PostgreSQL версия)
 docker build -t organizations-api .
 
 # Запуск контейнера
@@ -104,104 +107,98 @@ curl -X POST "http://localhost:8000/api/v1/organizations/geo/radius" \
   }'
 
 # Поиск по иерархии деятельностей
-curl -X GET "http://localhost:8000/api/v1/activities/1/organizations/hierarchy" \
+curl -X GET "http://localhost:8000/api/v1/activities/1/organizations/hierarchy?level=3" \
   -H "X-API-Key: your-secret-api-key-here"
+
+# Создание нового здания
+curl -X POST "http://localhost:8000/api/v1/buildings" \
+  -H "X-API-Key: your-secret-api-key-here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Новое здание",
+    "address": "г. Москва, ул. Новая, 123",
+    "latitude": 55.7558,
+    "longitude": 37.6176
+  }'
 ```
 
-## 📚 Документация
+## 📊 Покрытие кода
 
 ```bash
-# Swagger UI
-open http://localhost:8000/docs
+# Запуск тестов с покрытием
+pytest --cov=. test_*.py
 
-# ReDoc
-open http://localhost:8000/redoc
+# Генерация HTML отчета
+pytest --cov=. --cov-report=html test_*.py
 
-# Health check
-curl http://localhost:8000/health
+# Просмотр отчета
+open htmlcov/index.html  # Mac
+# или
+start htmlcov/index.html  # Windows
 ```
 
-## 🛠 Разработка
+## 🔧 Разработка
 
 ```bash
+# Запуск сервера разработки
+uvicorn main:app --reload --port 8000
+
+# Запуск с отладкой
+uvicorn main:app --reload --port 8000 --log-level debug
+
 # Проверка синтаксиса
-python -m py_compile main.py
+python -m py_compile *.py
 
 # Проверка импортов
-python -c "import main; print('✅ Импорты корректны')"
-
-# Очистка кэша
-find . -type d -name "__pycache__" -exec rm -r {} +
-find . -name "*.pyc" -delete
-
-# Перезапуск сервера
-pkill -f uvicorn
-uvicorn main:app --reload --port 8000
+python -c "import main; import routers; import models; import schemas"
 ```
 
-## 📊 Мониторинг
+## 📝 Документация
 
 ```bash
-# Проверка процессов
-ps aux | grep uvicorn
+# Генерация документации API
+# (автоматически доступна по адресу http://localhost:8000/docs)
+
+# Просмотр документации
+open http://localhost:8000/docs  # Mac
+# или
+start http://localhost:8000/docs  # Windows
+```
+
+## 🐛 Отладка
+
+```bash
+# Просмотр логов сервера
+tail -f logs/app.log
 
 # Проверка портов
 lsof -i :8000
 
-# Проверка размера базы данных
-ls -lh organizations.db
-
-# Статистика базы данных
-sqlite3 organizations.db "SELECT COUNT(*) as total_organizations FROM organizations;"
+# Остановка всех процессов на порту
+pkill -f uvicorn
 ```
 
-## 🔧 Отладка
+## 📈 Мониторинг
 
 ```bash
-# Запуск с отладкой
-uvicorn main:app --reload --port 8000 --log-level debug
+# Проверка здоровья приложения
+curl http://localhost:8000/health
 
-# Проверка переменных окружения
-echo $DATABASE_URL
-
-# Проверка зависимостей
-pip list
-
-# Проверка версии Python
-python --version
+# Статистика базы данных
+sqlite3 organizations.db "SELECT COUNT(*) as organizations FROM organizations;"
+sqlite3 organizations.db "SELECT COUNT(*) as buildings FROM buildings;"
+sqlite3 organizations.db "SELECT COUNT(*) as activities FROM activities;"
 ```
 
 ## 🚀 Продакшн
 
 ```bash
-# Сборка для продакшна
-docker build -t organizations-api:prod .
+# Сборка продакшн образа
+docker build -f Dockerfile.sqlite -t organizations-api:prod .
 
 # Запуск в продакшне
 docker run -d -p 8000:8000 --name organizations-api organizations-api:prod
 
-# Проверка статуса
-docker ps
-
-# Просмотр логов
+# Просмотр логов продакшн
 docker logs organizations-api
-```
-
-## 📝 Git команды
-
-```bash
-# Проверка статуса
-git status
-
-# Добавление файлов
-git add .
-
-# Создание коммита
-git commit -m "feat: add Docker containerization and documentation"
-
-# Отправка в репозиторий
-git push origin main
-
-# Просмотр истории
-git log --oneline
 ``` 

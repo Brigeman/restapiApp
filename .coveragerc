@@ -13,7 +13,7 @@ omit =
     test_manual.py
     main_backup.py
 
-[report]
+[report]s
 exclude_lines =
     pragma: no cover
     def __repr__

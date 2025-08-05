@@ -20,8 +20,8 @@ docker-compose up --build
 ### Вариант 2: Docker без Docker Compose
 
 ```bash
-# Соберите образ
-docker build -t organizations-api .
+# Соберите образ (SQLite версия)
+docker build -f Dockerfile.sqlite -t organizations-api .
 
 # Запустите контейнер
 docker run -p 8000:8000 organizations-api
@@ -89,7 +89,7 @@ X-API-Key: your-secret-api-key-here
 - `GET /api/v1/activities` - Список всех деятельностей
 - `GET /api/v1/activities/{id}` - Получить деятельность по ID
 - `GET /api/v1/activities/{id}/organizations` - Организации по деятельности
-- `GET /api/v1/activities/{id}/organizations/hierarchy` - Организации по иерархии
+- `GET /api/v1/activities/{id}/organizations/hierarchy?level={level}` - Организации по иерархии
 - `POST /api/v1/activities` - Создать новую деятельность
 
 ### Геопоиск
@@ -142,15 +142,20 @@ python seed_data.py
 
 ## 🔧 Конфигурация
 
-Основные настройки в `database.py`:
+Основные настройки в `config.py`:
 
 - `DATABASE_URL` - URL базы данных
-- `API_KEY` - Ключ для аутентификации (в `main.py`)
+- `API_KEY` - Ключ для аутентификации
+- `APP_NAME` - Название приложения
+- `APP_VERSION` - Версия приложения
 
 ## 🐳 Docker команды
 
 ```bash
-# Сборка образа
+# Сборка образа (SQLite)
+docker build -f Dockerfile.sqlite -t organizations-api .
+
+# Сборка образа (PostgreSQL)
 docker build -t organizations-api .
 
 # Запуск контейнера
@@ -185,8 +190,21 @@ curl -X POST "http://localhost:8000/api/v1/organizations/geo/radius" \
 
 ### Поиск по иерархии деятельностей
 ```bash
-curl -X GET "http://localhost:8000/api/v1/activities/1/organizations/hierarchy" \
+curl -X GET "http://localhost:8000/api/v1/activities/1/organizations/hierarchy?level=3" \
   -H "X-API-Key: your-secret-api-key-here"
+```
+
+### Создание нового здания
+```bash
+curl -X POST "http://localhost:8000/api/v1/buildings" \
+  -H "X-API-Key: your-secret-api-key-here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Новое здание",
+    "address": "г. Москва, ул. Новая, 123",
+    "latitude": 55.7558,
+    "longitude": 37.6176
+  }'
 ```
 
 ## 🏗 Архитектура
